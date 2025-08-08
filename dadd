@@ -1,4 +1,4 @@
--- 323
+
 
 -- variables
 	local uis = cloneref(game:GetService("UserInputService"))
@@ -1406,7 +1406,7 @@ function library:window(properties)
     -- keybind list (unchanged, as in original)
     -- ... (code not shown for brevity, but should be as in original) ...
 
-    -- main window
+     -- main window
     local main_window = library:panel({
         name = properties and properties.name or "Atlanta | ", 
         size = dim2(0, 604, 0, 628),
