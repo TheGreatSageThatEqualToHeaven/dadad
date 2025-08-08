@@ -1,4 +1,4 @@
-
+-- 323
 
 -- variables
 	local uis = cloneref(game:GetService("UserInputService"))
@@ -1250,21 +1250,165 @@
 
 -- (your variables and library/init code as before)
 
+-- Cleaned-up version with only main frame, style panel, and configuration panel (and all their logic)
+-- ESP preview and Playerlist panels are NOT included
+
+-- [ ... variable declarations, utility functions, and element creation helpers as in the original ... ]
+
 function library:window(properties)
-    local window = {opened = true}
+    local window = {opened = true}            
     local opened = {}
-    local dock_outline
-    local blur = library:create("BlurEffect", {
-        Parent = lighting,
-        Enabled = true,
+    local dock_outline;
+    local blur = library:create( "BlurEffect" , {
+        Parent = lighting;
+        Enabled = true;
         Size = 15
+    });    
+
+    library.cache = library:create("ScreenGui", {
+        Enabled = false,
+        Parent = gethui(),
+        Name = "" 
     })
 
-    -- ... (docking, keybind list, main_window creation as before) ...
+    function window.set_menu_visibility(bool) 
+        window.opened = bool 
+        
+        if bool then 
+            for _,gui in opened do 
+                gui.Enabled = true 
+                opened = {}
+            end 
+        else
+            for _,gui in library.guis do 
+                if gui.Enabled then 
+                    gui.Enabled = false
+                    table.insert(opened, gui)
+                end
+            end
+        end
+
+        library:tween(blur, {Size = bool and (flags["Blur Size"] or 15) or 0})
+
+        dock_outline.Visible = bool;
+
+        sgui.Enabled = true
+        notif_holder.Enabled = true
+        tooltip_sgui.Enabled = true
+        library.cache.Enabled = false
+
+        for _,tooltip in tooltip_sgui:GetChildren() do 
+            tooltip.Visible = false;
+        end 
+
+        if library.current_element_open then 
+            library.current_element_open.set_visible(false)
+            library.current_element_open.open = false 
+            library.current_element_open = nil 
+        end
+    end 
+
+    -- dock init
+    dock_outline = library:create("Frame", {
+        Parent = sgui,
+        Name = "",
+        Visible = true,
+        BorderColor3 = rgb(0, 0, 0),
+        AnchorPoint = vec2(0.5, 0),
+        Position = dim2(0.5, 0, 0, 20),
+        Size = dim2(0, 157, 0, 39),
+        BorderSizePixel = 0,
+        BackgroundColor3 = themes.preset.outline
+    }); 
+
+    library:apply_theme(dock_outline, "outline", "BackgroundColor3"); 
+    dock_outline.Position = dim2(0, dock_outline.AbsolutePosition.X, 0, dock_outline.AbsolutePosition.Y); 
+    dock_outline.AnchorPoint = vec2(0, 0); 
+    library:draggify(dock_outline);
+
+    local dock_inline = library:create("Frame", {
+        Parent = dock_outline,
+        Name = "",
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = themes.preset.inline
+    }) library:apply_theme(dock_inline, "inline", "BackgroundColor3") 
+    
+    local dock_holder = library:create("Frame", {
+        Parent = dock_inline,
+        Name = "",
+        Size = dim2(1, -2, 1, -2),
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = themes.preset.outline,
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    }) library:apply_theme(dock_holder, "outline", "BackgroundColor3") 
+    
+    local accent = library:create("Frame", {
+        Parent = dock_holder,
+        Name = "",
+        Size = dim2(1, 0, 0, 2),
+        BorderColor3 = rgb(0, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = themes.preset.accent
+    }) library:apply_theme(accent, "accent", "BackgroundColor3") 
+    
+    local UIGradient = library:create("UIGradient", {
+        Parent = accent,
+        Name = "",
+        Rotation = 90,
+        Color = rgbseq{
+        rgbkey(0, rgb(255, 255, 255)),
+        rgbkey(1, rgb(167, 167, 167))
+    }
+    })
+    
+    local button_holder = library:create("Frame", {
+        Parent = dock_holder,
+        Name = "",
+        BackgroundTransparency = 1,
+        Size = dim2(1, 0, 1, 0),
+        BorderColor3 = rgb(0, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    }) library.dock_holder = button_holder;
+    
+    local UIListLayout = library:create("UIListLayout", {
+        Parent = button_holder,
+        Name = "",
+        Padding = dim(0, 5),
+        FillDirection = Enum.FillDirection.Horizontal,
+        SortOrder = Enum.SortOrder.LayoutOrder
+    })
+    
+    local UIPadding = library:create("UIPadding", {
+        Parent = button_holder,
+        Name = "",
+        PaddingTop = dim(0, 6),
+        PaddingBottom = dim(0, 4),
+        PaddingRight = dim(0, 4),
+        PaddingLeft = dim(0, 4)
+    })
+            
+    local UIGradient = library:create("UIGradient", {
+        Parent = dock_holder,
+        Name = "",
+        Rotation = 90,
+        Color = rgbseq{
+            rgbkey(0, rgb(41, 41, 55)),
+            rgbkey(1, rgb(35, 35, 47))
+        }
+    }) library:apply_theme(UIGradient, "contrast", "Color") 
+    -- 
+
+    -- keybind list (unchanged, as in original)
+    -- ... (code not shown for brevity, but should be as in original) ...
 
     -- main window
     local main_window = library:panel({
-        name = properties and properties.name or "Atlanta | ",
+        name = properties and properties.name or "Atlanta | ", 
         size = dim2(0, 604, 0, 628),
         position = dim2(0, (camera.ViewportSize.X / 2) - 302 - 96, 0, (camera.ViewportSize.Y / 2) - 421 - 12),
         image = "rbxassetid://98823308062942",
@@ -1312,8 +1456,8 @@ function library:window(properties)
         BorderSizePixel = 0,
         BackgroundColor3 = themes.preset.outline
     })
-
-    library:apply_theme(outline, "outline", "BackgroundColor3")
+    
+    library:apply_theme(outline, "outline", "BackgroundColor3") 
 
     local inline = library:create("Frame", {
         Parent = outline,
@@ -1324,8 +1468,8 @@ function library:window(properties)
         BorderSizePixel = 0,
         BackgroundColor3 = themes.preset.inline
     })
-
-    library:apply_theme(inline, "inline", "BackgroundColor3")
+    
+    library:apply_theme(inline, "inline", "BackgroundColor3") 
 
     local background = library:create("Frame", {
         Parent = inline,
@@ -1355,153 +1499,181 @@ function library:window(properties)
             rgbkey(1, rgb(35, 35, 47))
         }
     })
+    
+    library:apply_theme(UIGradient, "contrast", "Color") 
+    library:make_resizable(items.main_holder) 
 
-    library:apply_theme(UIGradient, "contrast", "Color")
-    library:make_resizable(items.main_holder)
+    -- Style panel
+    local style = library:panel({
+        name = "Style", 
+        anchor_point = vec2(0, 0),
+        size = dim2(0, 394, 0, 464),
+        position = dim2(0, main_window.items.main_holder.AbsolutePosition.X + main_window.items.main_holder.AbsoluteSize.X + 2, 0, main_window.items.main_holder.AbsolutePosition.Y),
+        image = "rbxassetid://115194686863276",
+    })
 
-    ------------------------------------------------------------------------
-    -- Tabs setup
-    ------------------------------------------------------------------------
+    local watermark = library:watermark({default = os.date('Atlanta |  - %b %d %Y - %H:%M:%S')})  
 
-    -- EXAMPLE: Your main tab (put your real content here)
-    local main_tab = window:tab({name = "Main"})
-    local main_col = main_tab:column()
-    main_col:section({name = "Info"}):label({name = "Welcome!"})
+    task.spawn(function()
+        while task.wait(1) do 
+            watermark.change_text(os.date('Atlanta - Beta - %b %d %Y - %H:%M:%S'))
+        end 
+    end) 
 
-    -- SETTINGS TAB: Contains former style and config controls
-    local settings_tab = window:tab({name = "Settings"})
-    local column = settings_tab:column()
+    local style_items = style.items
+
+    local column = setmetatable(style_items, library):column() 
     local section = column:section({name = "Theme"})
     section:label({name = "Accent"})
-        :colorpicker({name = "Accent", color = themes.preset.accent, flag = "accent", callback = function(color, alpha)
-            library:update_theme("accent", color)
-        end, flag = "Accent"})
+    :colorpicker({name = "Accent", color = themes.preset.accent, flag = "accent", callback = function(color, alpha)
+        library:update_theme("accent", color)
+    end, flag = "Accent"})
     section:label({name = "Contrast"})
-        :colorpicker({name = "Low", color = themes.preset.low_contrast, flag = "low_contrast", callback = function(color)
-            if (flags["high_contrast"] and flags["low_contrast"]) then
-                library:update_theme("contrast", rgbseq{
-                    rgbkey(0, flags["low_contrast"].Color),
-                    rgbkey(1, flags["high_contrast"].Color)
-                })
-            end
-            library:update_theme("low_contrast", flags["low_contrast"].Color)
-        end})
-        :colorpicker({name = "High", color = themes.preset.high_contrast, flag = "high_contrast", callback = function(color)
+    :colorpicker({name = "Low", color = themes.preset.low_contrast, flag = "low_contrast", callback = function(color)
+        if (flags["high_contrast"] and flags["low_contrast"]) then 
             library:update_theme("contrast", rgbseq{
                 rgbkey(0, flags["low_contrast"].Color),
                 rgbkey(1, flags["high_contrast"].Color)
             })
-            library:update_theme("high_contrast", flags["high_contrast"].Color)
-        end})
+        end 
+
+        library:update_theme("low_contrast", flags["low_contrast"].Color)
+    end})
+    :colorpicker({name = "High", color = themes.preset.high_contrast, flag = "high_contrast", callback = function(color)
+        library:update_theme("contrast", rgbseq{
+            rgbkey(0, flags["low_contrast"].Color),
+            rgbkey(1, flags["high_contrast"].Color)
+        })
+
+        library:update_theme("high_contrast", flags["high_contrast"].Color)
+    end})
     section:label({name = "Inline"})
-        :colorpicker({name = "Inline", color = themes.preset.inline, callback = function(color, alpha)
-            library:update_theme("inline", color)
-        end, flag = "Inline"})
+    :colorpicker({name = "Inline", color = themes.preset.inline, callback = function(color, alpha)
+        library:update_theme("inline", color)
+    end, flag = "Inline"})
     section:label({name = "Outline"})
-        :colorpicker({name = "Outline", color = themes.preset.outline, callback = function(color, alpha)
-            library:update_theme("outline", color)
-        end, flag = "Outline"})
+    :colorpicker({name = "Outline", color = themes.preset.outline, callback = function(color, alpha)
+        library:update_theme("outline", color)
+    end, flag = "Outline"})
     section:label({name = "Text Color"})
-        :colorpicker({name = "Main", color = themes.preset.text, callback = function(color, alpha)
-            library:update_theme("text", color)
-        end, flag = "Main"})
-        :colorpicker({name = "Outline", color = themes.preset.text_outline, callback = function(color, alpha)
-            library:update_theme("text_outline", color)
-        end, flag = "Outline"})
+    :colorpicker({name = "Main", color = themes.preset.text, callback = function(color, alpha)
+        library:update_theme("text", color)
+    end, flag = "Main"})
+    :colorpicker({name = "Outline", color = themes.preset.text_outline, callback = function(color, alpha)
+        library:update_theme("text_outline", color)
+    end, flag = "Outline"})
     section:label({name = "Glow"})
-        :colorpicker({name = "Glow", color = themes.preset.glow, callback = function(color, alpha)
-            library:update_theme("glow", color)
-        end, flag = "Glow"})
+    :colorpicker({name = "Glow", color = themes.preset.glow, callback = function(color, alpha)
+        library:update_theme("glow", color)
+    end, flag = "Glow"})
     section:slider({name = "Blur Size", flag = "Blur Size", min = 0, max = 56, default = 15, interval = 1, callback = function(int)
-        if window.opened then
+        if window.opened then 
             blur.Size = int
         end
     end})
-
-    local section2 = column:section({name = "Other"})
-    section2:label({name = "UI Bind"})
-        :keybind({callback = window.set_menu_visibility, key = Enum.KeyCode.Insert})
-    section2:toggle({name = "Keybind List", flag = "keybind_list", callback = function(bool)
+    local section = column:section({name = "Other"})
+    section:label({name = "UI Bind"})
+    :keybind({callback = window.set_menu_visibility, key = Enum.KeyCode.Insert})
+    section:toggle({name = "Keybind List", flag = "keybind_list", callback = function(bool)
         library.keybind_list_frame.Visible = bool
     end})
-    section2:button_holder({})
-    section2:button({name = "Copy JobId", callback = function()
+    section:toggle({name = "Watermark", flag = "watermark", callback = function(bool)
+        watermark.set_visible(bool)
+    end})
+    section:button_holder({})
+    section:button({name = "Copy JobId", callback = function()
         setclipboard(game.JobId)
     end})
-    section2:button_holder({})
-    section2:button({name = "Copy GameID", callback = function()
+    section:button_holder({})
+    section:button({name = "Copy GameID", callback = function()
         setclipboard(game.GameId)
     end})
-    section2:button_holder({})
-    section2:button({name = "Copy Join Script", callback = function()
+    section:button_holder({})
+    section:button({name = "Copy Join Script", callback = function()
         setclipboard('game:GetService("TeleportService"):TeleportToPlaceInstance(' .. game.PlaceId .. ', "' .. game.JobId .. '", game.Players.LocalPlayer)')
     end})
-    section2:button_holder({})
-    section2:button({name = "Rejoin", callback = function()
+    section:button_holder({})
+    section:button({name = "Rejoin", callback = function()
         game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, lp)
     end})
-    section2:button_holder({})
-    section2:button({name = "Join New Server", callback = function()
+    section:button_holder({})
+    section:button({name = "Join New Server", callback = function()
         local apiRequest = game:GetService("HttpService"):JSONDecode(game:HttpGetAsync("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
         local data = apiRequest.data[random(1, #apiRequest.data)]
-        if data.playing <= flags["max_players"] then
+            
+        if data.playing <= flags["max_players"] then 
             game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, data.id)
-        end
+        end 
     end})
-    section2:slider({name = "Max Players", flag = "max_players", min = 0, max = 40, default = 15, interval = 1})
+    section:slider({name = "Max Players", flag = "max_players", min = 0, max = 40, default = 15, interval = 1})
 
-    local config_section = column:section({name = "Configurations"})
-    config_holder = config_section:list({flag = "config_name_list"})
-    config_section:textbox({flag = "config_name_text_box"})
-    config_section:button_holder({})
-    config_section:button({name = "Create", callback = function()
-        writefile(library.directory .. "/configs/" .. flags["config_name_text_box"] .. ".cfg", library:get_config())
-        library:config_list_update()
-    end})
-    config_section:button({name = "Delete", callback = function()
-        delfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg")
-        library:config_list_update()
-    end})
-    config_section:button_holder({})
-    config_section:button({name = "Load", callback = function()
-        library:load_config(readfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg"))
-        library:notification({text = "Loaded Config: " .. flags["config_name_list"], time = 3})
-    end})
-    config_section:button({name = "Save", callback = function()
-        writefile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg", library:get_config())
-        library:config_list_update()
-        library:notification({text = "Saved Config: " .. flags["config_name_list"], time = 3})
-    end})
-    config_section:button_holder({})
-    config_section:button({name = "Refresh Configs", callback = function()
-        library:config_list_update()
-    end})
-    config_section:button_holder({})
-    config_section:button({name = "Unload Config", callback = function()
-        library:load_config(library.old_config)
-    end})
-    config_section:button({name = "Unload Menu", callback = function()
-        library:load_config(library.old_config)
-        for _, gui in library.guis do
-            gui:Destroy()
-        end
-        for _, connection in library.connections do
-            connection:Disconnect()
-        end
-        blur:Destroy()
-    end})
+    -- Config panel
+    local holder = library:panel({
+        name = "Configurations", 
+        size = dim2(0, 324, 0, 410),
+        position = dim2(0, items.main_holder.AbsolutePosition.X + items.main_holder.AbsoluteSize.X + 2, 0, items.main_holder.AbsolutePosition.Y),
+        image = "rbxassetid://105199726008012",
+    }) 
 
-    ------------------------------------------------------------------------
-    -- END TABS SETUP
-    ------------------------------------------------------------------------
+    local config_items = holder.items
 
-    -- Ensure the first tab is selected/opened, or nothing will show!
-    main_tab.open_tab()
+    getgenv().load_config = function(name)
+        library:load_config(readfile(library.directory .. "/configs/" .. name .. ".cfg"))
+    end 
+
+    local column = setmetatable(config_items, library):column() 
+    local section = column:section({name = "Options"})
+        config_holder = section:list({flag = "config_name_list"})
+        section:textbox({flag = "config_name_text_box"})
+        section:button_holder({})
+        section:button({name = "Create", callback = function()
+            writefile(library.directory .. "/configs/" .. flags["config_name_text_box"] .. ".cfg", library:get_config())
+            library:config_list_update()
+        end})
+        section:button({name = "Delete", callback = function()
+            delfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg")
+            library:config_list_update()
+        end})
+        section:button_holder({})
+        section:button({name = "Load", callback = function()
+            library:load_config(readfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg"))
+            library:notification({text = "Loaded Config: " .. flags["config_name_list"], time = 3})
+        end})
+        section:button({name = "Save", callback = function()
+            writefile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg", library:get_config())
+            library:config_list_update()
+            library:notification({text = "Saved Config: " .. flags["config_name_list"], time = 3})
+        end})
+        section:button_holder({})
+        section:button({name = "Refresh Configs", callback = function()
+            library:config_list_update()
+        end})
+        section:button_holder({})
+        section:button({name = "Unload Config", callback = function()
+            library:load_config(library.old_config)
+        end})
+        section:button({name = "Unload Menu", callback = function()
+            library:load_config(library.old_config)
+
+            for _, gui in library.guis do 
+                gui:Destroy() 
+            end 
+
+            for _, connection in library.connections do 
+                connection:Disconnect() 
+            end
+
+            blur:Destroy()
+        end})
+
+    -- (NO ESP PREVIEW, NO PLAYERLIST PANEL!)
 
     return setmetatable(window, library)
 end
 
--- (rest of your code unchanged)
+-- ... keep all UI element methods: tab, section, slider, toggle, colorpicker, keybind, dropdown, list, textbox, button_holder, button, label ...
+-- ... do NOT remove these, as they're used by the main frame and tabs/buttons/toggles ...
+
 
 -- ... keep all the UI element methods: tab, section, slider, toggle, colorpicker, keybind, dropdown, list, textbox, button_holder, button, label ...
 -- ... do NOT remove these, as they're used by the main frame and tabs/buttons/toggles ...
