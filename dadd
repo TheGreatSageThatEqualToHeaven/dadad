@@ -1,4 +1,4 @@
---31313
+
 
 -- variables
 	local uis = cloneref(game:GetService("UserInputService"))
@@ -1248,23 +1248,19 @@
 
 -- In your library:window(properties) function, make these changes:
 
+-- (your variables and library/init code as before)
+
 function library:window(properties)
     local window = {opened = true}
     local opened = {}
-    local dock_outline;
+    local dock_outline
     local blur = library:create("BlurEffect", {
-        Parent = lighting;
-        Enabled = true;
+        Parent = lighting,
+        Enabled = true,
         Size = 15
-    });
-
-    library.cache = library:create("ScreenGui", {
-        Enabled = false,
-        Parent = gethui(),
-        Name = ""
     })
 
-    -- ... dock, keybind, and main_window creation as before ...
+    -- ... (docking, keybind list, main_window creation as before) ...
 
     -- main window
     local main_window = library:panel({
@@ -1363,11 +1359,17 @@ function library:window(properties)
     library:apply_theme(UIGradient, "contrast", "Color")
     library:make_resizable(items.main_holder)
 
-    -- SETTINGS TAB: Move contents of Style and Configurations panels into a new tab called "Settings"
-    -- Create the tab first:
-    local settings_tab = window:tab({name = "Settings"})
+    ------------------------------------------------------------------------
+    -- Tabs setup
+    ------------------------------------------------------------------------
 
-    -- Now add the style and configuration content to this tab:
+    -- EXAMPLE: Your main tab (put your real content here)
+    local main_tab = window:tab({name = "Main"})
+    local main_col = main_tab:column()
+    main_col:section({name = "Info"}):label({name = "Welcome!"})
+
+    -- SETTINGS TAB: Contains former style and config controls
+    local settings_tab = window:tab({name = "Settings"})
     local column = settings_tab:column()
     local section = column:section({name = "Theme"})
     section:label({name = "Accent"})
@@ -1415,16 +1417,13 @@ function library:window(properties)
             blur.Size = int
         end
     end})
+
     local section2 = column:section({name = "Other"})
     section2:label({name = "UI Bind"})
         :keybind({callback = window.set_menu_visibility, key = Enum.KeyCode.Insert})
     section2:toggle({name = "Keybind List", flag = "keybind_list", callback = function(bool)
         library.keybind_list_frame.Visible = bool
     end})
-    -- watermark code (optional, add if watermark functionality is needed)
-    -- section2:toggle({name = "Watermark", flag = "watermark", callback = function(bool)
-    --     watermark.set_visible(bool)
-    -- end})
     section2:button_holder({})
     section2:button({name = "Copy JobId", callback = function()
         setclipboard(game.JobId)
@@ -1451,7 +1450,6 @@ function library:window(properties)
     end})
     section2:slider({name = "Max Players", flag = "max_players", min = 0, max = 40, default = 15, interval = 1})
 
-    -- Configuration content
     local config_section = column:section({name = "Configurations"})
     config_holder = config_section:list({flag = "config_name_list"})
     config_section:textbox({flag = "config_name_text_box"})
@@ -1493,17 +1491,17 @@ function library:window(properties)
         blur:Destroy()
     end})
 
-    -- Create your other tabs here as usual, e.g.:
-    local tab1 = window:tab({name = "Main"})
-    local tab1_column = tab1:column()
-    -- tab1_column:section({name = "Example"}):toggle({name = "Toggle Example"})
+    ------------------------------------------------------------------------
+    -- END TABS SETUP
+    ------------------------------------------------------------------------
 
-    -- Make the first tab open by default
-    tab1.open_tab()
+    -- Ensure the first tab is selected/opened, or nothing will show!
+    main_tab.open_tab()
 
     return setmetatable(window, library)
 end
 
+-- (rest of your code unchanged)
 
 -- ... keep all the UI element methods: tab, section, slider, toggle, colorpicker, keybind, dropdown, list, textbox, button_holder, button, label ...
 -- ... do NOT remove these, as they're used by the main frame and tabs/buttons/toggles ...
