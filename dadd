@@ -1243,64 +1243,32 @@
 -- Only keep the code that creates the main window, tabs, sections, and all its controls.
 -- ... (keep all previous code as before) ...
 
+-- Only the relevant portions of the code are shown for brevity and clarity.
+-- This assumes you have removed the playerlist and esp panels as per your previous instruction.
+
+-- In your library:window(properties) function, make these changes:
+
 function library:window(properties)
-    local window = {opened = true}            
+    local window = {opened = true}
     local opened = {}
     local dock_outline;
-    local blur = library:create( "BlurEffect" , {
+    local blur = library:create("BlurEffect", {
         Parent = lighting;
         Enabled = true;
         Size = 15
-    });    
+    });
 
     library.cache = library:create("ScreenGui", {
         Enabled = false,
         Parent = gethui(),
-        Name = "" 
+        Name = ""
     })
 
-    function window.set_menu_visibility(bool) 
-        window.opened = bool 
-        
-        if bool then 
-            for _,gui in opened do 
-                gui.Enabled = true 
-                opened = {}
-            end 
-        else
-            for _,gui in library.guis do 
-                if gui.Enabled then 
-                    gui.Enabled = false
-                    table.insert(opened, gui)
-                end
-            end
-        end
-
-        library:tween(blur, {Size = bool and (flags["Blur Size"] or 15) or 0})
-
-        dock_outline.Visible = bool;
-
-        sgui.Enabled = true
-        notif_holder.Enabled = true
-        tooltip_sgui.Enabled = true
-        library.cache.Enabled = false
-
-        for _,tooltip in tooltip_sgui:GetChildren() do 
-            tooltip.Visible = false;
-        end 
-
-        if library.current_element_open then 
-            library.current_element_open.set_visible(false)
-            library.current_element_open.open = false 
-            library.current_element_open = nil 
-        end
-    end 
-
-    -- ... dock bar and keybind list creation as before ...
+    -- ... dock, keybind, and main_window creation as before ...
 
     -- main window
     local main_window = library:panel({
-        name = properties and properties.name or "Atlanta | ", 
+        name = properties and properties.name or "Atlanta | ",
         size = dim2(0, 604, 0, 628),
         position = dim2(0, (camera.ViewportSize.X / 2) - 302 - 96, 0, (camera.ViewportSize.Y / 2) - 421 - 12),
         image = "rbxassetid://98823308062942",
@@ -1348,8 +1316,8 @@ function library:window(properties)
         BorderSizePixel = 0,
         BackgroundColor3 = themes.preset.outline
     })
-    
-    library:apply_theme(outline, "outline", "BackgroundColor3") 
+
+    library:apply_theme(outline, "outline", "BackgroundColor3")
 
     local inline = library:create("Frame", {
         Parent = outline,
@@ -1360,8 +1328,8 @@ function library:window(properties)
         BorderSizePixel = 0,
         BackgroundColor3 = themes.preset.inline
     })
-    
-    library:apply_theme(inline, "inline", "BackgroundColor3") 
+
+    library:apply_theme(inline, "inline", "BackgroundColor3")
 
     local background = library:create("Frame", {
         Parent = inline,
@@ -1391,28 +1359,29 @@ function library:window(properties)
             rgbkey(1, rgb(35, 35, 47))
         }
     })
-    
-    library:apply_theme(UIGradient, "contrast", "Color") 
-    library:make_resizable(items.main_holder) 
 
-    -- SETTINGS TAB (combines Style and Configuration panels into one tab)
+    library:apply_theme(UIGradient, "contrast", "Color")
+    library:make_resizable(items.main_holder)
+
+    -- SETTINGS TAB: Move contents of Style and Configurations panels into a new tab called "Settings"
+    -- Create the tab first:
     local settings_tab = window:tab({name = "Settings"})
-    local settings_column = settings_tab:column()
 
-    -- ========== STYLE (THEME) SECTION ==========
-    local section = settings_column:section({name = "Theme"})
+    -- Now add the style and configuration content to this tab:
+    local column = settings_tab:column()
+    local section = column:section({name = "Theme"})
     section:label({name = "Accent"})
         :colorpicker({name = "Accent", color = themes.preset.accent, flag = "accent", callback = function(color, alpha)
             library:update_theme("accent", color)
         end, flag = "Accent"})
     section:label({name = "Contrast"})
         :colorpicker({name = "Low", color = themes.preset.low_contrast, flag = "low_contrast", callback = function(color)
-            if (flags["high_contrast"] and flags["low_contrast"]) then 
+            if (flags["high_contrast"] and flags["low_contrast"]) then
                 library:update_theme("contrast", rgbseq{
                     rgbkey(0, flags["low_contrast"].Color),
                     rgbkey(1, flags["high_contrast"].Color)
                 })
-            end 
+            end
             library:update_theme("low_contrast", flags["low_contrast"].Color)
         end})
         :colorpicker({name = "High", color = themes.preset.high_contrast, flag = "high_contrast", callback = function(color)
@@ -1442,52 +1411,48 @@ function library:window(properties)
             library:update_theme("glow", color)
         end, flag = "Glow"})
     section:slider({name = "Blur Size", flag = "Blur Size", min = 0, max = 56, default = 15, interval = 1, callback = function(int)
-        if window.opened then 
+        if window.opened then
             blur.Size = int
         end
     end})
-    local other_section = settings_column:section({name = "Other"})
-    other_section:label({name = "UI Bind"})
+    local section2 = column:section({name = "Other"})
+    section2:label({name = "UI Bind"})
         :keybind({callback = window.set_menu_visibility, key = Enum.KeyCode.Insert})
-    other_section:toggle({name = "Keybind List", flag = "keybind_list", callback = function(bool)
+    section2:toggle({name = "Keybind List", flag = "keybind_list", callback = function(bool)
         library.keybind_list_frame.Visible = bool
     end})
-    -- Optionally add watermark toggle if watermark is used
-    -- other_section:toggle({name = "Watermark", flag = "watermark", callback = function(bool) watermark.set_visible(bool) end})
-
-    other_section:button_holder({})
-    other_section:button({name = "Copy JobId", callback = function()
+    -- watermark code (optional, add if watermark functionality is needed)
+    -- section2:toggle({name = "Watermark", flag = "watermark", callback = function(bool)
+    --     watermark.set_visible(bool)
+    -- end})
+    section2:button_holder({})
+    section2:button({name = "Copy JobId", callback = function()
         setclipboard(game.JobId)
     end})
-    other_section:button_holder({})
-    other_section:button({name = "Copy GameID", callback = function()
+    section2:button_holder({})
+    section2:button({name = "Copy GameID", callback = function()
         setclipboard(game.GameId)
     end})
-    other_section:button_holder({})
-    other_section:button({name = "Copy Join Script", callback = function()
+    section2:button_holder({})
+    section2:button({name = "Copy Join Script", callback = function()
         setclipboard('game:GetService("TeleportService"):TeleportToPlaceInstance(' .. game.PlaceId .. ', "' .. game.JobId .. '", game.Players.LocalPlayer)')
     end})
-    other_section:button_holder({})
-    other_section:button({name = "Rejoin", callback = function()
+    section2:button_holder({})
+    section2:button({name = "Rejoin", callback = function()
         game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, lp)
     end})
-    other_section:button_holder({})
-    other_section:button({name = "Join New Server", callback = function()
+    section2:button_holder({})
+    section2:button({name = "Join New Server", callback = function()
         local apiRequest = game:GetService("HttpService"):JSONDecode(game:HttpGetAsync("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
         local data = apiRequest.data[random(1, #apiRequest.data)]
-        if data.playing <= flags["max_players"] then 
+        if data.playing <= flags["max_players"] then
             game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, data.id)
-        end 
+        end
     end})
-    other_section:slider({name = "Max Players", flag = "max_players", min = 0, max = 40, default = 15, interval = 1})
+    section2:slider({name = "Max Players", flag = "max_players", min = 0, max = 40, default = 15, interval = 1})
 
-    -- ========== CONFIGURATION SECTION ==========
-    local config_section = settings_column:section({name = "Configurations"})
-    -- Config holder logic
-    getgenv().load_config = function(name)
-        library:load_config(readfile(library.directory .. "/configs/" .. name .. ".cfg"))
-    end
-
+    -- Configuration content
+    local config_section = column:section({name = "Configurations"})
     config_holder = config_section:list({flag = "config_name_list"})
     config_section:textbox({flag = "config_name_text_box"})
     config_section:button_holder({})
@@ -1519,16 +1484,22 @@ function library:window(properties)
     end})
     config_section:button({name = "Unload Menu", callback = function()
         library:load_config(library.old_config)
-        for _, gui in library.guis do 
-            gui:Destroy() 
-        end 
-        for _, connection in library.connections do 
-            connection:Disconnect() 
+        for _, gui in library.guis do
+            gui:Destroy()
+        end
+        for _, connection in library.connections do
+            connection:Disconnect()
         end
         blur:Destroy()
     end})
 
-    -- You can add more tabs/sections as needed here
+    -- Create your other tabs here as usual, e.g.:
+    local tab1 = window:tab({name = "Main"})
+    local tab1_column = tab1:column()
+    -- tab1_column:section({name = "Example"}):toggle({name = "Toggle Example"})
+
+    -- Make the first tab open by default
+    tab1.open_tab()
 
     return setmetatable(window, library)
 end
