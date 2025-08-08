@@ -1499,7 +1499,6 @@ end
 -- ... keep all the UI element methods: tab, section, slider, toggle, colorpicker, keybind, dropdown, list, textbox, button_holder, button, label ...
 -- ... do NOT remove these, as they're used by the main frame and tabs/buttons/toggles ...
 
-return library, themes;
 		function library:watermark(options) 
 			local cfg = {
 				default = options.text or options.default or os.date('drain.lol | %b %d %Y | %H:%M')
